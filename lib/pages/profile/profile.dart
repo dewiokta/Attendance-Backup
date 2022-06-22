@@ -48,8 +48,11 @@ class _ProfilePageState extends State<ProfilePage> {
                   "Something wrong with message: ${snapshot.error.toString()}"),
             );
           } else if (snapshot.connectionState == ConnectionState.done) {
-            List<AnggotaDataResponse>? dataanggota = snapshot.data?.data;
-            return _buildListView(dataanggota!);
+            //TODO: data dari response api getDataAnggota bukan berupa List data,
+            // tapi object AnggotaDataResponse. Sesuaikan codenya
+            List<AnggotaDataResponse>? dataanggota = List.of([snapshot.data!.data]);
+            //TODO: code widget function _buildListView masih ada error layout
+            return _buildListView(dataanggota);
           } else {
             return const Center(
               child: CircularProgressIndicator(),
