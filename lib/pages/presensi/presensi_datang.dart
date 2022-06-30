@@ -1,12 +1,13 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_attendance/pages/login/blocs/auth_event.dart';
+import 'package:cool_alert/cool_alert.dart';
 import 'package:flutter_attendance/maindrawer.dart';
-import 'package:flutter_attendance/pages/profile/bloc/profile_bloc.dart';
+import 'package:flutter_attendance/model/presensidatang_model.dart';
+import 'package:flutter_attendance/model/presensipulang_model.dart';
+import 'package:flutter_attendance/network/api_service.dart';
+import 'package:flutter_attendance/pages/login/blocs/auth_event.dart';
 import 'package:flutter_attendance/pages/login/blocs/auth_state.dart';
-import 'package:flutter_attendance/pages/login/blocs/auth_repository.dart';
+import 'package:flutter_attendance/pages/profile/bloc/profile_bloc.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,7 +18,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../login/blocs/Auth_bloc.dart';
 import '../../theme.dart';
-import 'package:path/path.dart' as path;
 
 class PresensiDatang extends StatefulWidget {
   final AuthBloc authBloc;
@@ -30,62 +30,30 @@ class PresensiDatang extends StatefulWidget {
 }
 
 class _PresensiDatangState extends State<PresensiDatang> {
+  PresensiDatangModel? presensi;
   AuthBloc get _authBloc => widget.authBloc;
   ProfileBloc get _profileBloc => widget.profileBloc;
 
-  getID(String id) {
-    _user_id = id;
-    // print(_user_id);
-  }
+  // getID(String id) {
+  //   _user_id = id;
+  //   // print(_user_id);
+  // }
 
   var _latitude = "";
   var _longtitude = "";
   var _address = "";
   var _status = "On Process";
-  var _user_id = "";
+  // var _user_id = "";
+  var _foto_datang = "coba.png";
+  // var image = "";
 
   File? _image;
   final imagePicker = ImagePicker();
-  final _key = new GlobalKey<FormState>();
-
-  submit() async {
-    String BaseUrl = "https://attendance.putraprima.id/api/presensi-datang";
-    try {
-      var stream = new http.ByteStream(_image!.openRead());
-      var length = await _image?.length();
-      var uri = Uri.parse(BaseUrl);
-      var request = http.MultipartRequest("POST", uri);
-      request.fields['longtitude'] = _longtitude;
-      request.fields['latitude'] = _latitude;
-      request.fields['user_id'] = _user_id;
-
-      request.files.add(http.MultipartFile("foto_datang", stream, length!,
-          filename: path.basename(_image!.path)));
-      var response = await request.send();
-      if (response.statusCode > 2) {
-        print("image upload");
-        setState(() {
-          Navigator.pop(context);
-        });
-      } else {
-        print("image failed");
-      }
-    } catch (e) {
-      debugPrint("Error $e");
-    }
-
-    print(_longtitude);
-    print(_user_id);
-    print(_latitude);
-    print(_status);
-    print(_image);
-  }
 
   Future<void> _updatePosition() async {
     Position pos = await _determinePosition();
     List pm = await placemarkFromCoordinates(pos.latitude, pos.longitude);
     final image = await imagePicker.getImage(source: ImageSource.camera);
-
     // ignore: unused_element
     setState(() {
       _latitude = pos.latitude.toString();
@@ -93,8 +61,28 @@ class _PresensiDatangState extends State<PresensiDatang> {
       _address = pm[0].toString();
       _image = File(image!.path);
       _status;
-      _user_id = getID(_user_id);
     });
+  }
+
+  Future<void> _submit() async {
+    bool showSpinner = true;
+    PresensiDatangModel? result = await ApiService()
+        .createPresensiDatang(_latitude, _longtitude, _image, _status);
+    print(_longtitude);
+    print(_latitude);
+    print(_status);
+    print(_image);
+    if (result != null) {
+      setState(() {
+        presensi = result;
+      });
+    }
+    CoolAlert.show(
+      context: context,
+      type: CoolAlertType.success,
+      text: 'Presensi Sukses! Anda tidak perlu presensi lagi !',
+      autoCloseDuration: Duration(seconds: 2),
+    );
   }
 
   Future<Position> _determinePosition() async {
@@ -121,8 +109,6 @@ class _PresensiDatangState extends State<PresensiDatang> {
     return await Geolocator.getCurrentPosition();
   }
 
-  final AuthRepository authRepository = AuthRepository();
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -141,8 +127,6 @@ class _PresensiDatangState extends State<PresensiDatang> {
               return Container();
             }
             if (state is AuthData) {
-              var _id = state.id.toString();
-              getID(_id);
               return Container(
                 child: ListView(
                   children: [
@@ -164,10 +148,8 @@ class _PresensiDatangState extends State<PresensiDatang> {
                         menuAccount("Latitude", _latitude),
                         Padding(padding: EdgeInsets.only(top: 20)),
                         menuAccount("Address", _address),
-                        // Padding(padding: EdgeInsets.only(top: 20)),
-                        // menuAccount("Status", _status),
-                        // Padding(padding: EdgeInsets.only(top: 20)),
-                        // menuAccount("USER ID", _id),
+                        Padding(padding: EdgeInsets.only(top: 20)),
+                        menuAccount("Status", _status),
                       ],
                     ),
                     const SizedBox(
@@ -184,9 +166,7 @@ class _PresensiDatangState extends State<PresensiDatang> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                         ),
-                        onPressed: () {
-                          submit();
-                        },
+                        onPressed: _submit,
                         child: const Text(
                           "Simpan",
                           style: TextStyle(

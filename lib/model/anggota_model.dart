@@ -29,14 +29,6 @@ class AnggotaResponse {
 }
 
 class AnggotaDataResponse {
-  final int id;
-  final int idUser;
-  final String name;
-  final String alamat;
-  final String ttl;
-  final String jenisKelamin;
-  final String jabatan;
-  final String createdAt;
 
   AnggotaDataResponse({
     required this.id,
@@ -48,6 +40,16 @@ class AnggotaDataResponse {
     required this.jabatan,
     required this.createdAt,
   });
+
+  final int id;
+  final int idUser;
+  final String name;
+  final String alamat;
+  final String ttl;
+  final String jenisKelamin;
+  final String jabatan;
+  final String createdAt;
+
 
   factory AnggotaDataResponse.fromJson(Map<String, dynamic> json) =>
       AnggotaDataResponse(
