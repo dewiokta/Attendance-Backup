@@ -29,6 +29,7 @@ class AnggotaResponse {
 }
 
 class AnggotaDataResponse {
+
   AnggotaDataResponse({
     required this.id,
     required this.idUser,
@@ -48,6 +49,7 @@ class AnggotaDataResponse {
   final String jenisKelamin;
   final String jabatan;
   final String createdAt;
+
 
   factory AnggotaDataResponse.fromJson(Map<String, dynamic> json) =>
       AnggotaDataResponse(
